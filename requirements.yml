@@ -1,0 +1,15 @@
+# Package requirements for the local network scanner tool (main.py)
+# These packages provide network discovery and name resolution utilities.
+
+pacman:
+  - python          # Python interpreter (runtime)
+  - python-pip      # Optional: manage Python dependencies easily
+  - nmap            # Network scanner for host discovery
+  - arp-scan        # Layer-2 network scanner for MAC/vendor detection
+  - avahi           # Provides avahi-resolve-address for mDNS lookups
+  - nbtscan         # NetBIOS scanner for Windows hostnames
+  - iproute2        # Provides 'ip neigh' for MAC and state resolution
+  - bind            # Provides 'dig' and DNS utilities (optional fallback)
+  - net-tools       # Provides 'arp' command as legacy fallback
+  - make            # Allows usage of the Makefile targets
+  - git             # Optional: fetch or version control the repository
