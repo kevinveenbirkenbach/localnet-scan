@@ -13,7 +13,7 @@ all:
 
 test:
 	@echo "Running unit tests..."
-	@python3 -m unittest -v test.py
+	@PYTHONPATH=. python3 -m unittest discover -s tests -p "test_*.py" -v
 
 install:
 	@echo ""

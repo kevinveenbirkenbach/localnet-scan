@@ -13,3 +13,4 @@ pacman:
   - net-tools       # Provides 'arp' command as legacy fallback
   - make            # Allows usage of the Makefile targets
   - git             # Optional: fetch or version control the repository
+  - fping           # Fast ICMP sweep to discover alive hosts (optional but recommended)
