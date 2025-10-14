@@ -11,9 +11,6 @@ Usage examples:
   sudo python3 main.py --subnet 192.168.0.0/24 --format csv --output hosts.csv
   python3 main.py --auto --format json
   sudo python3 main.py --subnet 192.168.0.0/24 --ansible
-
-The script is intentionally conservative: it only runs discovery
-commands available on the host. Install `arp-scan` for fast L2 results.
 """
 
 from __future__ import annotations
@@ -53,7 +50,6 @@ def detect_subnet(auto: bool, provided: Optional[str]) -> str:
             for token in first:
                 if "/" in token and token.count('.') == 3:
                     return token
-    # Fallback: use primary hostname IP and assume /24
     try:
         ip = socket.gethostbyname(socket.gethostname())
         if ip and not ip.startswith("127."):
@@ -112,27 +108,52 @@ def run_nmap_hosts(subnet: str, timeout: int) -> List[str]:
 
 
 def probe_ip_neigh(ip: str) -> Dict:
+    """Parse `ip neigh show <ip>` robustly (no fixed positions)."""
     if which("ip"):
         rc, out, err = run(["ip", "neigh", "show", ip])
         if rc == 0 and out:
-            parts = out.split()
+            # choose the line for this IP (some systems may emit multiple lines)
+            lines = [l.strip() for l in out.splitlines() if l.strip()]
+            line = next((l for l in lines if l.startswith(ip)), lines[0])
+            tokens = line.split()
+
             d = {"ip": ip, "mac": "", "dev": "", "state": ""}
+
+            # device: token after 'dev'
             try:
-                d["dev"] = parts[3]
-                if "lladdr" in parts:
-                    i = parts.index("lladdr")
-                    d["mac"] = parts[i + 1]
-                d["state"] = parts[-1]
-            except Exception:
+                i = tokens.index("dev")
+                if i + 1 < len(tokens):
+                    d["dev"] = tokens[i + 1]
+            except ValueError:
                 pass
+
+            # mac: token after 'lladdr'
+            try:
+                j = tokens.index("lladdr")
+                if j + 1 < len(tokens):
+                    d["mac"] = tokens[j + 1]
+            except ValueError:
+                pass
+
+            # state: usually last UPPER token (STALE/REACHABLE/DELAY/FAILED/INCOMPLETE/PROBE/PERMANENT)
+            for t in reversed(tokens):
+                if t.isupper():
+                    d["state"] = t
+                    break
+            if not d["state"] and tokens:
+                d["state"] = tokens[-1]
+
             return d
+
+    # Fallback to legacy `arp -an`
     if which("arp"):
-        rc, out, err = run(["arp", "-an"])  # may not exist on some systems
+        rc, out, err = run(["arp", "-an"])
         for line in out.splitlines():
             if ip in line:
                 m = re.search(r"([0-9A-Fa-f:]{17})", line)
                 mac = m.group(1) if m else ""
                 return {"ip": ip, "mac": mac, "dev": "", "state": ""}
+
     return {"ip": ip, "mac": "", "dev": "", "state": ""}
 
 
@@ -255,7 +276,6 @@ def main():
 
     if args.no_arpscan:
         global run_arp_scan
-
         def run_arp_scan(interface: Optional[str], subnet: str, timeout: int) -> List[Dict]:
             return []
 
