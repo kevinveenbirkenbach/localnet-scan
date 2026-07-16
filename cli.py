@@ -6,7 +6,6 @@ import socket
 from typing import Optional
 
 from aggregate import DiscoveryPipeline
-from models import Host
 from output import output_ansible, output_csv, output_json, output_table
 from scanners import ArpScanScanner, FpingSweepScanner, NmapPingScanner, SeedArpCacheScanner
 from utils import which, run

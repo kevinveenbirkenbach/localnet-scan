@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set
 from models import Host
 from resolvers import probe_ip_neigh_one, resolve_mdns, reverse_dns, run_nbtscan_range
-from scanners import Scanner, HostScanner, IpScanner
+from scanners import HostScanner, IpScanner
 
 class DiscoveryPipeline:
     """
